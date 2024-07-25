@@ -6,7 +6,7 @@
 /*   By: mganchev <mganchev@student.42london.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/10 16:00:24 by mganchev          #+#    #+#             */
-/*   Updated: 2024/07/20 15:12:14 by mganchev         ###   ########.fr       */
+/*   Updated: 2024/07/25 13:49:37 by mganchev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,9 +43,11 @@ int					ft_print_ptr(void *ptr);
 int					ft_putstr_fd(char *s, int fd);
 int					ft_putnbr_fd(int n, int fd);
 int					ft_putunbr_fd(int n, int fd);
+int					ft_printf(const char *fmt, ...);
 int					ft_strncmp(const char *s1, const char *s2, size_t n);
 int					ft_memcmp(const void *s1, const void *s2, size_t n);
 char				*ft_itoa(int n);
+char				*get_next_line(int fd);
 char				*ft_strdup(const char *s);
 char				*ft_strchr(const char *s, int c);
 char				*ft_strrchr(const char *s, int c);
@@ -64,7 +66,7 @@ void				ft_grid_size(char **grid, int *rows, int *cols);
 void				**ft_allocate_grid(int rows, int cols, size_t size);
 void				*ft_memcpy(void *dest, const void *src, size_t n);
 void				*ft_calloc(size_t nmemb, size_t size);
-void				*ft_realloc(void *ptr, size_t size);
+void				*ft_realloc(void *ptr, size_t old_size, size_t new_size);
 void				*ft_memchr(const void *s, int c, size_t n);
 void				*ft_memset(void *s, int c, size_t n);
 void				*ft_memmove(void *dest, const void *src, size_t n);

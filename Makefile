@@ -6,7 +6,7 @@
 #    By: mganchev <mganchev@student.42london.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/07/20 18:08:20 by mganchev          #+#    #+#              #
-#    Updated: 2024/07/20 18:10:01 by mganchev         ###   ########.fr        #
+#    Updated: 2024/07/25 17:38:21 by mganchev         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,46 +23,44 @@ CFLAGS = -Wall -Werror -Wextra -g3
 SRCDIR =./sources
 OBJDIR =./build
 
-SRCS =
+SRCS_SERVER = $(SRCDIR)/server.c
+SRCS_CLIENT = $(SRCDIR)/client.c
 
-OBJS = 
+OBJS_SERVER = $(OBJDIR)/server.o
+OBJS_CLIENT = $(OBJDIR)/client.o
 
-all: $(OBJDIR) $(NAME)
+all: $(OBJDIR) $(NAME_SERVER) $(NAME_CLIENT)
 
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -I$(INCLUDE) -I$(LIBFT) -I$(MLX) -c $< -o $@
-
-$(OBJDIR)/%.o: $(BONUS_SRCDIR)/%.c
-	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -I$(INCLUDE) -I$(LIBFT) -I$(MLX) -c $< -o $@
-
-${NAME}: $(OBJS)
+	$(CC) $(CFLAGS) -I$(INCLUDE) -I$(LIBFT)/include -c $< -o $@
+	
+$(NAME_SERVER): $(OBJS_SERVER)
 	@make -C $(LIBFT)
 	@make -C $(LIBFT) bonus
-	@make -C $(MLX)
-	$(CC) $(CFLAGS) -L$(MLX) -L$(LIBFT) $(OBJS) -lmlx -lXext -lX11 -lm -lft -o $(NAME)
+	$(CC) $(CFLAGS) -L$(LIBFT) $(OBJS_SERVER) -lft -o $(NAME_SERVER)
+
+$(NAME_CLIENT): $(OBJS_CLIENT)
+	@make -C $(LIBFT)
+	@make -C $(LIBFT) bonus
+	$(CC) $(CFLAGS) -L$(LIBFT) $(OBJS_CLIENT) -lft -o $(NAME_CLIENT)
 
 clean:
-	@make clean -C $(MLX)
 	@make clean -C $(LIBFT)
 	@rm -rf $(OBJDIR)
 
 fclean:
-	@make clean -C $(MLX)
 	@make fclean -C $(LIBFT)
 	@rm -rf $(OBJDIR)
-	@rm -f $(NAME)
+	@rm -f $(NAME_SERVER)
+	@rm -f $(NAME_CLIENT)
 
 re: fclean all
 
-test: all
-	./$(NAME)
-
 leaks: all
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME)
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME_CLIENT) 802024 Hello!
 
 .PHONY: all clean fclean re libft leaks
