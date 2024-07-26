@@ -6,48 +6,43 @@
 /*   By: mganchev <mganchev@student.42london.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/20 15:08:57 by mganchev          #+#    #+#             */
-/*   Updated: 2024/07/25 23:05:10 by mganchev         ###   ########.fr       */
+/*   Updated: 2024/07/26 17:46:26 by mganchev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minitalk.h"
 
-pid_t					client_pid = 0;
+t_sig	g_tracker = {0, 0};
 
-void	decrypt_message(int bit)
+void	decrypt_message(int bit, pid_t client_pid)
 {
-	static int	count = 0;
-	static int	character = 0;
-
-	character = (character << 1) | bit;
-	count++;
-	if (count == 8)
+	g_tracker.character = (g_tracker.character << 1) | bit;
+	g_tracker.count++;
+	if (g_tracker.count == 8)
 	{
-		if (character == '\0')
+		if (g_tracker.character == '\0')
 		{
 			kill(client_pid, SIGUSR2);
 			ft_printf("\n");
 		}
 		else
-			ft_printf("%c", character);
-		character = 0;
-		count = 0;
+			ft_printf("%c", g_tracker.character);
+		g_tracker.character = 0;
+		g_tracker.count = 0;
 	}
 	kill(client_pid, SIGUSR1);
 }
 
 void	handle_signal(int signum, siginfo_t *info, void *context)
 {
-	(void)info;
 	(void)context;
-	client_pid = info->si_pid;
 	if (signum == SIGUSR1)
-		decrypt_message(1);
-	else if (signum == SIGUSR2)
-		decrypt_message(0);
+		decrypt_message(1, info->si_pid);
+	if (signum == SIGUSR2)
+		decrypt_message(0, info->si_pid);
 }
 
-struct sigaction	setup_signal_handlers(int signum)
+void	setup_signal_handlers(int signum)
 {
 	struct sigaction	act;
 
@@ -56,7 +51,6 @@ struct sigaction	setup_signal_handlers(int signum)
 	sigemptyset(&act.sa_mask);
 	if (sigaction(signum, &act, NULL) == -1)
 		ft_printf("Error\n");
-	return (act);
 }
 
 int	main(void)
@@ -70,11 +64,3 @@ int	main(void)
 	while (1)
 		pause();
 }
-/*
-TO DO:
-	//1. endless loop so server can constantly receive messages
-	2. store received bits into a string based on signals
-	3. decrypt message and print to terminal
-	4. BONUS: once message is received send a signal back to client
-	(UNICODE characters should be supported based on encryption method)
-*/

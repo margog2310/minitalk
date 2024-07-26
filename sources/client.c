@@ -6,29 +6,16 @@
 /*   By: mganchev <mganchev@student.42london.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/20 15:08:02 by mganchev          #+#    #+#             */
-/*   Updated: 2024/07/25 23:02:12 by mganchev         ###   ########.fr       */
+/*   Updated: 2024/07/26 19:47:05 by mganchev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minitalk.h"
+#include <unistd.h>
 
-pid_t				server_pid = 0;
+volatile sig_atomic_t	g_flag = 0;
 
-void	send_bit(int bit)
-{
-	if (bit == 1)
-	{
-		kill(server_pid, SIGUSR1);
-		pause();
-	}
-	if (bit == 0)
-	{
-		kill(server_pid, SIGUSR2);
-		pause();
-	}
-}
-
-void	encrypt_message(char character)
+void	encrypt_message(char character, pid_t server_pid)
 {
 	int	i;
 	int	bit;
@@ -37,20 +24,35 @@ void	encrypt_message(char character)
 	while (i--)
 	{
 		bit = (character >> i & 1);
-		send_bit(bit);
+		if (bit == 1)
+			kill(server_pid, SIGUSR1);
+		if (bit == 0)
+			kill(server_pid, SIGUSR2);
+		while (1)
+		{
+			if (g_flag == 1)
+			{
+				g_flag = 0;
+				break ;
+			}
+		}
 	}
 }
+
 void	handle_signal(int signum, siginfo_t *info, void *context)
 {
 	(void)info;
 	(void)context;
 	if (signum == SIGUSR1)
+	{
+		g_flag = 1;
 		return ;
+	}
 	else if (signum == SIGUSR2)
 		ft_printf("Message received.");
 }
 
-struct sigaction	setup_signal_handlers(int signum)
+void	setup_signal_handlers(int signum)
 {
 	struct sigaction	act;
 
@@ -59,37 +61,46 @@ struct sigaction	setup_signal_handlers(int signum)
 	sigemptyset(&act.sa_mask);
 	if (sigaction(signum, &act, NULL) == -1)
 		ft_printf("Error\n");
-	return (act);
+}
+
+bool	check_pid(char *str)
+{
+	unsigned int	i;
+	pid_t			server_pid;
+
+	i = 0;
+	while (str[i])
+	{
+		if (!ft_isdigit(str[i]))
+			return (false);
+		i++;
+	}
+	server_pid = ft_atoi(str);
+	if (kill(server_pid, 0 == -1))
+		return (false);
+	return (true);
 }
 
 int	main(int argc, char *argv[])
 {
 	int		i;
-	char	*message;
-	pid_t	client_pid;
+	pid_t	server_pid;
 
 	if (argc == 3)
 	{
 		i = 0;
-		client_pid = getpid();
+		if (!check_pid(argv[1]))
+		{
+			ft_printf("Invalid PID");
+			exit(EXIT_FAILURE);
+		}
 		server_pid = ft_atoi(argv[1]);
-		message = argv[2];
-		ft_printf("PID: %d\n", client_pid);
 		setup_signal_handlers(SIGUSR1);
 		setup_signal_handlers(SIGUSR2);
-		while (message[i] != '\0')
-		{
-			encrypt_message(message[i]);
-			i++;
-		}
-		encrypt_message('\0');
+		while (*argv[2])
+			encrypt_message(*argv[2]++, server_pid);
+		encrypt_message('\0', server_pid);
 	}
 	else
 		ft_printf("Error: Invalid arguments\n");
 }
-/*
-TO DO:
-		//1. breakdown message string into bits and send signals accordingly
-		2. create stop condition to signify end of message
-		3. BONUS: once serves sends signal back print "Message received"
-*/
